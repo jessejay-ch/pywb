@@ -69,8 +69,22 @@
         'host': "{{ _('host') }}",
         'domain': "{{ _('domain') }}",
       },
+      from: "{{ _('From') }}",
+      until: "{{ _('until') }}",
+      present: "{{ _('present') }}",
+      earliest: "{{ _('earliest') }}",
     };
 
+  var filterMods = {
+    '=': "{{ _('Contains') }}",
+    '==': "{{ _('Matches Exactly') }}",
+    '=~': "{{ _('Matches Regex') }}",
+    '=!': "{{ _('Does Not Contain') }}",
+    '=!=': "{{ _('Is Not') }}",
+    '=!~': "{{ _('Does Not Begin With') }}"
+  };
+  var filteringBy = "{{ _('Filtering by') }}";
+  var forString = " {{ _('for') }} ";
   var renderCal = new RenderCalendar({ prefix: "{{ prefix }}", staticPrefix: "{{ static_prefix }}", text: text });
   renderCal.init();
 </script>
@@ -80,8 +94,21 @@
 <div id="app" style="width: 100%; height: 100%"></div>
 
 <script>
-  VueUI.main("{{ static_prefix }}", "{{ url }}", "{{ prefix }}", undefined, "{{ ui.logo }}", "{{ ui.navbar_background_hex | default('f8f9fa') }}", "{{ ui.navbar_color_hex | default('212529') }}", "{{ ui.navbar_light_buttons }}", "{{ env.pywb_lang | default('en') }}",
-      allLocales, i18nStrings);
+  VueUI.main({
+      staticPrefix: "{{ static_prefix }}",
+      url: "{{ url }}",
+      prefix: "{{ prefix }}",
+      timestamp: undefined,
+      logoUrl: "{{ ui.logo }}",
+      navbarBackground: "{{ ui.navbar_background_hex | default('f8f9fa') }}",
+      navbarColor: "{{ ui.navbar_color_hex | default('212529') }}",
+      navbarLightButtons: "{{ ui.navbar_light_buttons }}",
+      logoHomeUrl: "{{ ui.logo_home_url }}",
+      disablePrinting: "{{ ui.disable_printing }}",
+      allLocales: allLocales
+    },
+    "{{ env.pywb_lang | default('en') }}",
+    i18nStrings);
 </script>
 
 {% endif %}

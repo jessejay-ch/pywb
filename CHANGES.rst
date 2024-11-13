@@ -1,3 +1,41 @@
+pywb 2.7.3 changelist
+~~~~~~~~~~~~~~~~~~~~~
+
+* issue_792 catch warcio exception by @oskarhek in https://github.com/webrecorder/pywb/pull/793
+* Add ui.logo_home_url as config.yaml option by @tw4l in https://github.com/webrecorder/pywb/pull/791
+* [#795] Show error when adding duplicate warc file by @kuechensofa in https://github.com/webrecorder/pywb/pull/797
+* Make search page more intuitive by @krakan in https://github.com/webrecorder/pywb/pull/794
+* Modify search template buttons by @tw4l in https://github.com/webrecorder/pywb/pull/801
+* [#804] Use default_locale when lang not set in the request by @krakan in https://github.com/webrecorder/pywb/pull/805
+* feat: regex substitution on surt rules match by @mijho in https://github.com/webrecorder/pywb/pull/780
+* Bump minimatch from 3.0.4 to 3.1.2 in /pywb/vueui by @dependabot in https://github.com/webrecorder/pywb/pull/777
+* Bump decode-uri-component from 0.2.0 to 0.2.2 in /pywb/vueui by @dependabot in https://github.com/webrecorder/pywb/pull/786
+* rules: add 'debugNoBatch' rewrite for fb and insta by @ikreymer in https://github.com/webrecorder/pywb/pull/806
+* Vue main order by @tw4l in https://github.com/webrecorder/pywb/pull/809
+* wombat: bump to 3.4.4 https://github.com/webrecorder/pywb/pull/808
+
+pywb 2.7.2 changelist
+~~~~~~~~~~~~~~~~~~~~~
+
+* Fix regression introduced by improper wombat update in 2.7.1
+* Fix `redirect_to_exact: false` functionality: if not set, UI will stay on current timestamp, but will display info on actual capture.
+* Location bar nav now keeps current timestamp instead of defaulting to calendar view.
+* 'Live' mode fixes, no longer cache live cdx entry, don't add timestamp when navigating in live mode without timestamp
+* Calendar dropdown on replay now scrollable.
+* Timeline toggle on replay is 'sticky', will stay on if toggled on replay.
+* Capture text: use '|' as in 'Current Capture: [title] | [capture date]'
+* Document title: Add 'Archived Page: ' prefix to avoid confusion with live pages.
+
+pywb 2.7.1 changelist
+~~~~~~~~~~~~~~~~~~~~~
+
+* Add locale-dependent handling of first day of week by @krakan in https://github.com/webrecorder/pywb/pull/781
+* Make filter expressions translatable by @krakan in https://github.com/webrecorder/pywb/pull/783
+* Add title to top frame in framed replay
+* Add missing tooltip translation strings
+* Fix calendar and timeline rendering for replay URLs without a timestamp
+* Update template documentation
+
 pywb 2.7.0 changelist
 ~~~~~~~~~~~~~~~~~~~~~
 
@@ -1143,7 +1181,7 @@ pywb 0.9.6 changelist
 pywb 0.9.5 changelist
 ~~~~~~~~~~~~~~~~~~~~~
 
-* s3 loading: support ``s3://`` scheme in block loader, allowing for loading index and archive files from s3. ``boto`` library must be installed seperately
+* s3 loading: support ``s3://`` scheme in block loader, allowing for loading index and archive files from s3. ``boto`` library must be installed separately
   via ``pip install boto``. Attempt default boto auth path, and if that fails, attempt anonymous s3 connection.
   
 * Wombat/Client-Side Rewrite Customizations: New ``rewrite_opts.client`` settings from ``config.yaml`` are passed directly to wombat as json. 
@@ -1239,7 +1277,7 @@ pywb 0.9.1 changelist
 
 * cdx server query: add support for ``url=*.host`` and ``url=host/*`` as shortcuts for ``matchType=domain`` and ``matchType=prefix``
 
-* zipnum cdx cluster: support loading index shared from prefix path instead of seperate location file.
+* zipnum cdx cluster: support loading index shared from prefix path instead of separate location file.
 
   The ``shard_index_loc`` config property may contain match and replace properties.
   Regex replacement is then used to obtain path prefix from the shard prefix path.
@@ -1605,7 +1643,7 @@ pywb 0.4.7 changelist
 
 * Rewrite: Parsing of html as raw bytes instead of decode/encode, detection still needed for non-ascii compatible encoding.
 
-* Indexing: Refactoring of cdx-indexer using a seperate 'archive record iterator' and pluggable cdx writer classes. Groundwork for creating custom indexers.
+* Indexing: Refactoring of cdx-indexer using a separate 'archive record iterator' and pluggable cdx writer classes. Groundwork for creating custom indexers.
 
 * Indexing: Support for 9 field cdx formats with -9 flag.
 

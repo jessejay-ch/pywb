@@ -3,12 +3,15 @@ export class PywbI18N {
   static getLocale() { // get via public static method
     return PywbI18N.#locale;
   }
+  static firstDayOfWeek = 1;
   static init = (locale, config) => {
     if (PywbI18N.instance) {
       throw new Error('cannot instantiate PywbI18N twice');
     }
     PywbI18N.#locale = locale;
     PywbI18N.instance = new PywbI18N(config);
+    let intlLocale = new Intl.Locale(PywbI18N.getLocale());
+    if ('weekInfo' in intlLocale) PywbI18N.firstDayOfWeek = intlLocale.weekInfo.firstDay % 7;
   }
 
   // PywbI18N expects from the i18n string source to receive months SHORT and LONG names in the config like this:
@@ -29,14 +32,15 @@ export class PywbI18N {
   getMonth(id, type='long') {
     return decodeURIComponent(this.config[PywbI18N.monthIdPrefix[id]+'_'+type]);
   }
-  // can get long (default) or short day string or intial
+  // can get long (default) or short day string or initial
   // PywbI18N expects to receive day's initials like:
   // config.mon_short, config.tue_long, ...., config.<mmm>_short, config.<mmm>_long
   getWeekDay(id, type='long') {
     return decodeURIComponent(this.config[id+'_'+type])
   }
   getWeekDays(type='long') {
-    return ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'].map(d => this.getWeekDay(d, type));
+    let weekDays = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+    return weekDays.concat(weekDays).slice(PywbI18N.firstDayOfWeek, PywbI18N.firstDayOfWeek + 7).map(d => this.getWeekDay(d, type));
   }
   getText(id, embeddedVariableStrings=null) {
     const translated = decodeURIComponent(this.config[id] || id);

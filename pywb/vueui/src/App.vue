@@ -4,9 +4,12 @@
     <nav
       class="navbar navbar-light navbar-expand-lg fixed-top top-navbar justify-content-center"
       :style="navbarStyle">
-      <a class="navbar-brand flex-grow-1 my-1" href="/">
+      <a class="navbar-brand flex-grow-1 my-1" :href="config.logoHomeUrl" v-if="config.logoHomeUrl">
         <img :src="config.logoImg" id="logo-img" alt="_('pywb logo')">
       </a>
+      <div class="navbar-brand flex-grow-1 my-1" v-else>
+        <img :src="config.logoImg" id="logo-img" alt="_('pywb logo')">
+      </div>
       <div class="flex-grow-1 d-flex" id="searchdiv">
         <form
           class="form-inline my-2 my-md-0 mx-lg-auto"
@@ -69,9 +72,20 @@
               class="btn btn-sm"
               :class="{active: showTimelineView, 'btn-outline-light': lightButtons, 'btn-outline-dark': !lightButtons}"
               :aria-pressed="showTimelineView"
-              @click="showTimelineView = !showTimelineView"
+              @click="toggleTimelineView"
               :title="(showTimelineView ? _('Hide timeline') : _('Show timeline'))">
               <i class="far fa-chart-bar"></i>
+            </button>
+          </li>
+          <li class="nav-item">
+            <button
+              class="btn btn-sm"
+              :class="{'btn-outline-light': lightButtons, 'btn-outline-dark': !lightButtons}"
+              :aria-pressed="printReplayFrame"
+              @click="printReplayFrame"
+              v-if="printingEnabled && hasReplayFrame()"
+              :title="_('Print')">
+              <i class="fas fa-print"></i>
             </button>
           </li>
           <li class="nav-item dropdown" v-if="localesAreSet">
@@ -113,7 +127,7 @@
             {{ config.title }}
           </span>
         </span>
-        <span class="mr-1" v-if="config.title">,</span>
+        <span class="mr-1" v-if="config.title">|</span>
         {{currentSnapshot.getTimeDateFormatted()}}
       </span>
     </nav>
@@ -142,7 +156,7 @@
     </div>
 
     <!-- Calendar -->
-    <div class="card" v-if="currentPeriod && showFullView && currentPeriod.children.length">
+    <div class="card" id="calendar-card" v-if="currentPeriod && showFullView && currentPeriod.children.length">
       <div class="card-body" id="calendar-card-body">
         <CalendarYear
           :period="currentPeriod"
@@ -173,8 +187,8 @@ export default {
       currentSnapshot: null,
       currentSnapshotIndex: null,
       msgs: [],
-      showFullView: true,
-      showTimelineView: true,
+      showFullView: false,
+      showTimelineView: false,
       maxTimelineZoomLevel: PywbPeriod.Type.day,
       config: {
         title: "",
@@ -192,6 +206,10 @@ export default {
     // when the user navigates there via browser back/forward buttons
     addEventListener('unload', (event) => { });
   },
+  updated: function() {
+    // set top frame title equal to value pulled from replay frame
+    document.title = this._("Archived Page: ") + this.config.title;
+  },
   computed: {
     sessionStorageUrlKey() {
       // remove http(s), www and trailing slash
@@ -208,6 +226,9 @@ export default {
     },
     lightButtons() {
       return !!this.config.navbarLightButtons;
+    },
+    printingEnabled() {
+      return !this.config.disablePrinting;
     },
     previousSnapshot() {
       if (!this.currentSnapshotIndex) {
@@ -277,7 +298,7 @@ export default {
       if (reloadIFrame !== false) {
         this.$emit("show-snapshot", snapshot);
       }
-      this.hideBannerUtilities();
+      this.initBannerState(true);
     },
     gotoPreviousSnapshot() {
       let periodToChangeTo = this.currentPeriod.findByFullId(this.previousSnapshot.getFullId());
@@ -290,9 +311,22 @@ export default {
     gotoUrl(event) {
       event.preventDefault();
       const newUrl = document.querySelector("#theurl").value;
-      if (newUrl !== this.url) {
-        window.location.href = this.config.prefix + "*/" + newUrl;
+      if (newUrl !== this.config.url) {
+        const ts = this.config.timestamp === undefined ? "*" : this.config.timestamp;
+        window.location.href = this.config.prefix + ts + (ts ? "/" : "") + newUrl;
       }
+    },
+    toggleTimelineView() {
+      this.showTimelineView = !this.showTimelineView;
+      window.localStorage.setItem("showTimelineView", this.showTimelineView ? "1" : "0");
+    },
+    hasReplayFrame() {
+      return !! window.frames.replay_iframe;
+    },
+    printReplayFrame() {
+      window.frames.replay_iframe.contentWindow.focus();
+      window.frames.replay_iframe.contentWindow.print();
+      return false;
     },
     setData(/** @type {PywbData} data */ data) {
 
@@ -317,6 +351,10 @@ export default {
       }.bind(this));
     },
     setSnapshot(view) {
+      if (!this.currentPeriod) {
+        return false;
+      }
+
       // turn off calendar (aka full) view
       this.showFullView = false;
 
@@ -326,17 +364,21 @@ export default {
       this.config.url = view.url;
 
       let periodToChangeTo = this.currentPeriod.findByFullId(snapshot.getFullId());
-      this.gotoPeriod(periodToChangeTo, false /* onlyZoomToPeriod */);
-    },
-    setTimelineView() {
-      this.showTimelineView = !this.showTimelineView;
-      if (this.showTimelineView === true) {
-        this.showFullView = false;
+      if (periodToChangeTo) {
+        this.gotoPeriod(periodToChangeTo, false /* onlyZoomToPeriod */);
+        return true;
       }
+      return false;
     },
-    hideBannerUtilities() {
-      this.showFullView = false;
-      this.showTimelineView = false;
+    initBannerState(isReplay) {
+      // if not replay, always show both
+      if (!isReplay) {
+        this.showFullView = true;
+        this.showTimelineView = true;
+      } else {
+        this.showFullView = false;
+        this.showTimelineView = window.localStorage.getItem("showTimelineView") === "1";
+      }
     },
     updateTitle(title) {
       this.config.title = title;
@@ -355,7 +397,10 @@ export default {
     width: 100%;
   }
   .app.expanded {
-    height: 130px;
+    /*height: 130px;*/
+    max-height: calc(100vh - 90px);
+    display: flex;
+    flex-direction: column;
   }
   .full-view {
     /*position: fixed;*/
@@ -443,6 +488,10 @@ export default {
   div.timeline-wrap div.card {
     margin-top: 55px;
   }
+  #calendar-card {
+    overflow-y: auto;
+    max-height: 100%;
+  }
   div.timeline-wrap div.card-body {
     display: flex;
     align-items: center;
@@ -453,6 +502,7 @@ export default {
     align-items: center;
     justify-content: center;
   }
+
   #calendar-card-body {
     padding: 0;
   }

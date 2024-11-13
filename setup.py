@@ -62,10 +62,6 @@ def generate_git_hash_py(pkg, filename='git_hash.py'):
 def load_requirements(filename):
     with open(filename, 'rt') as fh:
         requirements = fh.read().rstrip().split('\n')
-    if sys.version_info > (3, 0):
-        requirements.append("py3AMF")
-    else:
-        requirements.append("pyAMF")
     return requirements
 
 
@@ -113,6 +109,7 @@ setup(
             "translate_toolkit"
         ],
     },
+    python_requires='>=3.7,<3.12',
     tests_require=load_requirements("test_requirements.txt"),
     cmdclass={'test': PyTest},
     test_suite='',
@@ -131,16 +128,12 @@ setup(
         'Environment :: Web Environment',
         'License :: OSI Approved :: GNU General Public License (GPL)',
         'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
         'Topic :: Internet :: Proxy Servers',
         'Topic :: Internet :: WWW/HTTP',
         'Topic :: Internet :: WWW/HTTP :: WSGI',

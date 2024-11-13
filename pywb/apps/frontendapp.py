@@ -1,7 +1,7 @@
 from gevent.monkey import patch_all; patch_all()
 
 from werkzeug.routing import Map, Rule, RequestRedirect, Submount
-from werkzeug.wsgi import pop_path_info
+from wsgiref.util import shift_path_info
 from six.moves.urllib.parse import urljoin, parse_qsl
 from six import iteritems
 from warcio.utils import to_native_str
@@ -108,6 +108,7 @@ class FrontEndApp(object):
         self.templates_dir = config.get('templates_dir', 'templates')
         self.static_dir = config.get('static_dir', 'static')
         self.static_prefix = config.get('static_prefix', 'static')
+        self.default_locale = config.get('default_locale', '')
 
         metadata_templ = os.path.join(self.warcserver.root_dir, '{coll}', 'metadata.yaml')
         self.metadata_cache = MetadataCache(metadata_templ)
@@ -414,6 +415,14 @@ class FrontEndApp(object):
         # if coll == self.all_coll:
         #    coll = '*'
 
+        config = self.warcserver.get_coll_config(coll)
+        is_live = config.get("index") == "$live"
+
+        if is_live:
+            cache_control = "no-store, no-cache"
+        else:
+            cache_control = "max-age=86400, must-revalidate"
+
         cdx_url = base_url.format(coll=coll)
 
         if environ.get('QUERY_STRING'):
@@ -425,7 +434,11 @@ class FrontEndApp(object):
             cdx_url += 'limit=' + str(self.query_limit)
 
         try:
-            res = requests.get(cdx_url, stream=True)
+            headers = {}
+            for key in environ.keys():
+                if key.startswith("HTTP_X_"):
+                    headers[key[5:].replace("_", "-")] = environ[key]
+            res = requests.get(cdx_url, stream=True, headers=headers)
 
             status_line = '{} {}'.format(res.status_code, res.reason)
             content_type = res.headers.get('Content-Type')
@@ -433,7 +446,7 @@ class FrontEndApp(object):
             return WbResponse.bin_stream(StreamIter(res.raw),
                                          content_type=content_type,
                                          status=status_line,
-                                         headers=[("Cache-Control", "max-age=86400, must-revalidate")])
+                                         headers=[("Cache-Control", cache_control)])
 
         except Exception as e:
             return WbResponse.text_response('Error: ' + str(e), status='400 Bad Request')
@@ -545,9 +558,9 @@ class FrontEndApp(object):
             return
 
         if coll != '$root':
-            pop_path_info(environ)
+            shift_path_info(environ)
             if record:
-                pop_path_info(environ)
+                shift_path_info(environ)
 
         paths = [self.warcserver.root_dir]
 
@@ -590,7 +603,7 @@ class FrontEndApp(object):
         and message.
 
         :param dict environ: The WSGI environment dictionary for the request
-        :param str err_type: The identifier for type of error that occured
+        :param str err_type: The identifier for type of error that occurred
         :param str url: The url of the archived page that was requested
         """
         raise AppPageNotFound(err_type, url)
@@ -656,8 +669,12 @@ class FrontEndApp(object):
 
             lang = args.pop('lang', '')
             if lang:
-                pop_path_info(environ)
+                shift_path_info(environ)
+
+            if lang:
                 environ['pywb_lang'] = lang
+            elif self.default_locale:
+                environ['pywb_lang'] = self.default_locale
 
             response = endpoint(environ, **args)
 
